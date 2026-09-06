@@ -1,0 +1,174 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+@theme {
+  /* Brand / Primary */
+  --color-lingua-purple: #6C4EF5;
+  --color-lingua-deep-purple: #5B3BF6;
+  --color-lingua-blue: #4D8BFF;
+  --color-lingua-green: #21C16B;
+
+  /* Semantic */
+  --color-success: #21C16B;
+  --color-warning: #FFC800;
+  --color-streak: #FF8A00;
+  --color-error: #FF4D4F;
+  --color-info: #4D8BFF;
+
+  /* Neutrals */
+  --color-text-primary: #0D132B;
+  --color-text-secondary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-surface: #F6F7FB;
+  --color-background: #FFFFFF;
+
+  /* Font Families */
+  --font-poppins-regular: "Poppins-Regular";
+  --font-poppins-medium: "Poppins-Medium";
+  --font-poppins-semibold: "Poppins-SemiBold";
+  --font-poppins-bold: "Poppins-Bold";
+}
+
+/* ==========================================================================
+   Typography Utilities (BEM pattern as required by AGENTS.md)
+   ========================================================================== */
+
+.typography__h1 {
+  font-family: "Poppins-Bold";
+  font-size: 32px;
+  line-height: 38.4px;
+  color: #0D132B;
+}
+
+.typography__h2 {
+  font-family: "Poppins-SemiBold";
+  font-size: 24px;
+  line-height: 31.2px;
+  color: #0D132B;
+}
+
+.typography__h3 {
+  font-family: "Poppins-SemiBold";
+  font-size: 20px;
+  line-height: 26px;
+  color: #0D132B;
+}
+
+.typography__h4 {
+  font-family: "Poppins-Medium";
+  font-size: 16px;
+  line-height: 22.4px;
+  color: #0D132B;
+}
+
+.typography__body-large {
+  font-family: "Poppins-Regular";
+  font-size: 16px;
+  line-height: 25.6px;
+  color: #0D132B;
+}
+
+.typography__body-medium {
+  font-family: "Poppins-Regular";
+  font-size: 14px;
+  line-height: 22.4px;
+  color: #6B7280;
+}
+
+.typography__body-small {
+  font-family: "Poppins-Regular";
+  font-size: 13px;
+  line-height: 20.8px;
+  color: #6B7280;
+}
+
+.typography__caption {
+  font-family: "Poppins-Regular";
+  font-size: 11px;
+  line-height: 15.4px;
+  color: #6B7280;
+}
+
+/* ==========================================================================
+   Lingua Component Utilities (BEM pattern)
+   ========================================================================== */
+
+.lingua-card {
+  background-color: #FFFFFF;
+  border-width: 1px;
+  border-color: #E5E7EB;
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.lingua-card--surface {
+  background-color: #F6F7FB;
+  border-width: 1px;
+  border-color: #E5E7EB;
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.lingua-button {
+  border-radius: 16px;
+  padding-vertical: 14px;
+  padding-horizontal: 24px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+}
+
+.lingua-button--primary {
+  background-color: #6C4EF5;
+  border-bottom-width: 4px;
+  border-bottom-color: #5037BA;
+}
+
+.lingua-button--secondary {
+  background-color: #4D8BFF;
+  border-bottom-width: 4px;
+  border-bottom-color: #316AD0;
+}
+
+.lingua-button--success {
+  background-color: #21C16B;
+  border-bottom-width: 4px;
+  border-bottom-color: #179652;
+}
+
+.lingua-button--streak {
+  background-color: #FF8A00;
+  border-bottom-width: 4px;
+  border-bottom-color: #CC6E00;
+}
+
+.lingua-button--outline {
+  background-color: #FFFFFF;
+  border-width: 2px;
+  border-color: #E5E7EB;
+  border-bottom-width: 4px;
+  border-bottom-color: #D1D5DB;
+}
+
+.lingua-badge {
+  border-radius: 9999px;
+  padding-vertical: 4px;
+  padding-horizontal: 12px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.lingua-badge--streak {
+  background-color: #FFF3E6;
+}
+
+.lingua-badge--success {
+  background-color: #E9F9F0;
+}
+
+.lingua-badge--purple {
+  background-color: #F0EDFE;
+}
