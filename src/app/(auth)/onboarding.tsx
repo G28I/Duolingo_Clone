@@ -55,7 +55,7 @@ export default function OnboardingScreen() {
         <View className="px-6 pb-6 pt-2">
           <TouchableOpacity
             activeOpacity={0.9}
-            onPress={() => router.push("/")}
+            onPress={() => router.push("/sign-up")}
             className="lingua-button lingua-button--primary w-full relative flex-row items-center justify-center py-4 rounded-2xl"
           >
             <Text className="font-['Poppins-SemiBold'] text-[17px] text-white">
