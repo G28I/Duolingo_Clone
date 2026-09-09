@@ -60,7 +60,6 @@ export default function VerificationModal({
         const result = await onVerify(numericCode);
         if (result.success) {
           onClose();
-          router.replace("/");
         } else {
           setErrorMessage(result.error || "Verification failed. Please try again.");
           setIsVerifying(false);

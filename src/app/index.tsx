@@ -99,6 +99,32 @@ export default function DesignSystemScreen() {
           </View>
         </TouchableOpacity>
 
+        {/* Language Selection Navigation Card */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => router.push("/language-select")}
+          className="mb-4 flex-row items-center justify-between rounded-2xl bg-[#F0FDF4] border border-[#DCFCE7] p-4"
+        >
+          <View className="flex-row items-center gap-3">
+            <Image
+              source={images.earth}
+              className="h-12 w-12 rounded-xl"
+              resizeMode="contain"
+            />
+            <View>
+              <Text className="font-['Poppins-Bold'] text-base text-[#166534]">
+                Choose Language
+              </Text>
+              <Text className="font-['Poppins-Regular'] text-xs text-[#15803D]">
+                Spanish, French, Japanese, German & more
+              </Text>
+            </View>
+          </View>
+          <View className="h-8 w-8 items-center justify-center rounded-full bg-[#DCFCE7]">
+            <Text className="font-['Poppins-Bold'] text-lg text-[#166534]">›</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Auth Navigation Quick Cards */}
         <View className="mb-6 flex-row gap-3">
           <TouchableOpacity

@@ -120,13 +120,41 @@ export default function SignUpScreen() {
   const handleSocialAuth = async (strategy: "oauth_google" | "oauth_facebook" | "oauth_apple") => {
     setErrorMessage("");
     try {
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const { createdSessionId, setActive, signUp, signIn } = await startSSOFlow({
         strategy,
       });
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
         router.replace("/");
+        return;
+      }
+
+      // Handle missing requirements (such as username required by Clerk instance)
+      if (signUp && signUp.status === "missing_requirements") {
+        const missing = signUp.missingFields || [];
+        const updatePayload: Record<string, any> = {};
+
+        if (missing.includes("username")) {
+          const emailPrefix = (signUp.emailAddress || "user")
+            .split("@")[0]
+            .replace(/[^a-zA-Z0-9_]/g, "");
+          const cleanPrefix = emailPrefix.length >= 3 ? emailPrefix : `user_${emailPrefix}`;
+          updatePayload.username = `${cleanPrefix}_${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+
+        const completeSignUp = await signUp.update(updatePayload);
+        if (completeSignUp.status === "complete" && completeSignUp.createdSessionId && setActive) {
+          await setActive({ session: completeSignUp.createdSessionId });
+          router.replace("/");
+          return;
+        }
+      }
+
+      if (signIn && signIn.status === "complete" && signIn.createdSessionId && setActive) {
+        await setActive({ session: signIn.createdSessionId });
+        router.replace("/");
+        return;
       }
     } catch (err: any) {
       console.error(`Social auth (${strategy}) error:`, err);
@@ -148,7 +176,7 @@ export default function SignUpScreen() {
         {/* Back Button */}
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.back()}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/onboarding"))}
           className="h-10 w-10 items-center justify-center rounded-full"
         >
           <Text className="font-['Poppins-Bold'] text-2xl text-text-primary">
