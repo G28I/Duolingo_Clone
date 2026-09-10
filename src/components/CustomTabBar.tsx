@@ -84,7 +84,7 @@ export function CustomTabBar({
       stiffness: 160,
       mass: 0.8,
     });
-  }, [activeIndex, tabWidth]);
+  }, [activeIndex, tabWidth, translateX]);
 
   const animatedCircleStyle = useAnimatedStyle(() => {
     return {

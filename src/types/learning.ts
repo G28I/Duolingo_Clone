@@ -128,11 +128,11 @@ export interface ListenAndRepeatActivity extends BaseActivity {
 
 export interface MatchPairsActivity extends BaseActivity {
   type: "match_pairs";
-  pairs: Array<{
+  pairs: {
     id: string;
     term: string;
     translation: string;
-  }>;
+  }[];
 }
 
 export interface AIConversationActivity extends BaseActivity {

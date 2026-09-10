@@ -38,12 +38,12 @@ export default function HomeScreen() {
       default:
         return "Hola";
     }
-  }, [selectedLanguage?.id]);
+  }, [selectedLanguage]);
 
   const languageUnits = useMemo(() => {
     if (!selectedLanguage?.id) return [];
     return getUnitsForLanguage(selectedLanguage.id);
-  }, [selectedLanguage?.id]);
+  }, [selectedLanguage]);
 
   const currentUnitText = useMemo(() => {
     if (languageUnits.length > 0) {
@@ -56,7 +56,7 @@ export default function HomeScreen() {
     if (!selectedLanguage?.id) return "At the café";
     const lessons = getLessonsForLanguage(selectedLanguage.id);
     return lessons.length > 0 ? lessons[0].title : "At the café";
-  }, [selectedLanguage?.id]);
+  }, [selectedLanguage]);
 
   if (!isLoaded || !isSignedIn) {
     return (
@@ -178,7 +178,7 @@ export default function HomeScreen() {
         <View className="mb-6">
           <View className="mb-3.5 flex-row items-center justify-between">
             <Text className="font-['Poppins-Bold'] text-lg text-[#1E1B4B]">
-              Today's plan
+              {"Today's plan"}
             </Text>
 
             <TouchableOpacity

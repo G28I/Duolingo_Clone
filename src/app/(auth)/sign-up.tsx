@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,16 +12,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as AuthSession from "expo-auth-session";
-import { useAuth, useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useSignUp, useSSO } from "@clerk/expo";
 import { images } from "@/constants/images";
 import VerificationModal from "@/components/VerificationModal";
 
 export default function SignUpScreen() {
   const router = useRouter();
-  const { signIn } = useSignIn();
-  const { signUp, errors, fetchStatus } = useSignUp();
+  const { signUp, fetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
-  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

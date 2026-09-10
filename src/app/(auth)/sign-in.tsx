@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,15 +12,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as AuthSession from "expo-auth-session";
-import { useAuth, useSignIn, useSSO } from "@clerk/expo";
+import { useSignIn, useSSO } from "@clerk/expo";
 import { images } from "@/constants/images";
 import VerificationModal from "@/components/VerificationModal";
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { signIn, errors, fetchStatus } = useSignIn();
+  const { signIn, fetchStatus } = useSignIn();
   const { startSSOFlow } = useSSO();
-  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
 
   const [email, setEmail] = useState("");
   const [showVerification, setShowVerification] = useState(false);
@@ -319,7 +317,7 @@ export default function SignInScreen() {
         {/* Footer */}
         <View className="my-8 flex-row items-center justify-center gap-1">
           <Text className="font-['Poppins-Regular'] text-sm text-text-secondary">
-            Don't have an account?
+            {"Don't have an account?"}
           </Text>
           <TouchableOpacity
             activeOpacity={0.7}

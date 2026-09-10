@@ -141,7 +141,7 @@ export default function LanguageSelectionScreen() {
             {filteredLanguages.length === 0 && (
               <View className="items-center justify-center py-8">
                 <Text className="font-['Poppins-Regular'] text-sm text-text-secondary">
-                  No languages found matching "{searchQuery}"
+                  {`No languages found matching "${searchQuery}"`}
                 </Text>
               </View>
             )}

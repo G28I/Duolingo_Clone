@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
 
 interface VerificationModalProps {
   visible: boolean;
@@ -28,7 +27,6 @@ export default function VerificationModal({
   onVerify,
   onResend,
 }: VerificationModalProps) {
-  const router = useRouter();
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -37,13 +35,13 @@ export default function VerificationModal({
 
   useEffect(() => {
     if (visible) {
-      setCode("");
-      setIsVerifying(false);
-      setErrorMessage("");
-      setResendStatus("");
       const timer = setTimeout(() => {
+        setCode("");
+        setIsVerifying(false);
+        setErrorMessage("");
+        setResendStatus("");
         inputRef.current?.focus();
-      }, 100);
+      }, 50);
       return () => clearTimeout(timer);
     }
   }, [visible]);
@@ -200,7 +198,7 @@ export default function VerificationModal({
             ) : (
               <View className="flex-row items-center justify-center gap-1 pt-1">
                 <Text className="font-['Poppins-Regular'] text-xs text-text-secondary">
-                  Didn't receive the email?
+                  {"Didn't receive the email?"}
                 </Text>
                 <TouchableOpacity activeOpacity={0.7} onPress={handleResend}>
                   <Text className="font-['Poppins-Bold'] text-xs text-lingua-purple">
