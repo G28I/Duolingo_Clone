@@ -6,6 +6,9 @@ import googleIcon from "@/assets/images/google-icon.png";
 import facebookIcon from "@/assets/images/facebook-icon.png";
 import appleIcon from "@/assets/images/apple-icon.png";
 import earth from "@/assets/images/earth.png";
+import treasure from "@/assets/images/treasure.png";
+import palace from "@/assets/images/palace.png";
+import streakFire from "@/assets/images/streak-fire.png";
 
 export const images = {
   mascot,
@@ -16,6 +19,9 @@ export const images = {
   facebookIcon,
   appleIcon,
   earth,
+  treasure,
+  palace,
+  streakFire,
 } as const;
 
 export type ImageKey = keyof typeof images;

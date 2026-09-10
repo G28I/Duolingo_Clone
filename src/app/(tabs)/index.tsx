@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -10,20 +10,53 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useAuth, useClerk, useUser } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
+import { Ionicons } from "@expo/vector-icons";
 import { images } from "@/constants/images";
-import { theme } from "@/theme";
 import { useLanguageStore } from "@/store/useLanguageStore";
+import { getLessonsForLanguage, getUnitsForLanguage } from "@/data";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
-  const clerk = useClerk();
-  const { signOut } = clerk;
-  const { selectedLanguage, clearSelectedLanguage } = useLanguageStore();
-  const [streakCount, setStreakCount] = useState(5);
-  const [activeTab, setActiveTab] = useState<"all" | "colors" | "typography" | "components">("all");
+  const { selectedLanguage } = useLanguageStore();
+
+  const userFirstName = useMemo(() => {
+    return user?.firstName || user?.username || "Alex";
+  }, [user]);
+
+  const greetingPrefix = useMemo(() => {
+    switch (selectedLanguage?.id) {
+      case "fr":
+        return "Bonjour";
+      case "de":
+        return "Hallo";
+      case "ja":
+        return "Konnichiwa";
+      case "es":
+      default:
+        return "Hola";
+    }
+  }, [selectedLanguage?.id]);
+
+  const languageUnits = useMemo(() => {
+    if (!selectedLanguage?.id) return [];
+    return getUnitsForLanguage(selectedLanguage.id);
+  }, [selectedLanguage?.id]);
+
+  const currentUnitText = useMemo(() => {
+    if (languageUnits.length > 0) {
+      return `A1 • Unit ${languageUnits[0].order}`;
+    }
+    return "A1 • Unit 3";
+  }, [languageUnits]);
+
+  const firstLessonTitle = useMemo(() => {
+    if (!selectedLanguage?.id) return "At the café";
+    const lessons = getLessonsForLanguage(selectedLanguage.id);
+    return lessons.length > 0 ? lessons[0].title : "At the café";
+  }, [selectedLanguage?.id]);
 
   if (!isLoaded || !isSignedIn) {
     return (
@@ -39,131 +72,227 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Brand Header */}
-        <View className="mb-6 flex-row items-center justify-between border-b border-border pb-4">
-          <View className="flex-row items-center">
-            <Image
-              source={images.mascotLogo}
-              className="h-12 w-36"
-              resizeMode="contain"
-            />
-          </View>
-          <View className="lingua-badge lingua-badge--streak flex-row items-center gap-1.5 px-3 py-1.5">
-            <Text className="text-sm">🔥</Text>
-            <Text className="font-['Poppins-Bold'] text-sm text-streak">
-              {streakCount} Days
-            </Text>
-          </View>
-        </View>
-
-        {/* Authenticated User Status & Sign Out */}
-        <View className="mb-4 flex-row items-center justify-between rounded-2xl border border-border bg-[#F5F3FF] p-3.5">
-          <View className="flex-1 mr-3">
-            <Text className="font-['Poppins-Bold'] text-sm text-text-primary">
-              Welcome, {user?.firstName || user?.username || "Student"}!
-            </Text>
-            <Text numberOfLines={1} className="font-['Poppins-Regular'] text-xs text-text-secondary mt-0.5">
-              {user?.primaryEmailAddress?.emailAddress || "Signed in with Clerk"}
-            </Text>
-          </View>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => signOut()}
-            className="rounded-xl bg-white px-3.5 py-2 border border-border"
-          >
-            <Text className="font-['Poppins-Bold'] text-xs text-error">
-              Sign Out
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Selected Language & Clear Storage Test Card */}
-        <View className="mb-4 rounded-2xl border border-border bg-[#F8F9FB] p-3.5">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-3">
-              <Text className="text-3xl">{selectedLanguage?.flag || "🌐"}</Text>
-              <View>
-                <Text className="font-['Poppins-Bold'] text-sm text-text-primary">
-                  Learning {selectedLanguage?.name || "No Language Selected"}
-                </Text>
-                <Text className="font-['Poppins-Regular'] text-xs text-text-secondary">
-                  {selectedLanguage?.nativeName} · {selectedLanguage?.totalLessons || 0} lessons
-                </Text>
-              </View>
+        {/* Top Header Bar */}
+        <View className="mb-5 flex-row items-center justify-between pt-1">
+          {/* Left: Language Flag + Greeting */}
+          <View className="flex-row items-center gap-2.5">
+            <View className="h-9 w-9 items-center justify-center rounded-full bg-gray-100 shadow-sm overflow-hidden border border-gray-200">
+              <Text className="text-xl">
+                {selectedLanguage?.flag || "🇪🇸"}
+              </Text>
             </View>
+            <Text className="font-['Poppins-Bold'] text-xl text-[#1E1B4B]">
+              {greetingPrefix}, {userFirstName}! 👋
+            </Text>
+          </View>
+
+          {/* Right: Streak & Notifications */}
+          <View className="flex-row items-center gap-3">
+            {/* Streak Badge */}
+            <View className="flex-row items-center gap-1.5 rounded-full bg-white px-3 py-1 border border-gray-100 shadow-sm">
+              <Image
+                source={images.streakFire}
+                className="h-5 w-5"
+                resizeMode="contain"
+              />
+              <Text className="font-['Poppins-Bold'] text-sm text-[#1E1B4B]">
+                12
+              </Text>
+            </View>
+
+            {/* Notification Bell */}
             <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => router.push("/language-select")}
-              className="rounded-xl border border-border bg-white px-3 py-1.5"
+              activeOpacity={0.7}
+              className="h-9 w-9 items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm"
             >
-              <Text className="font-['Poppins-Medium'] text-xs text-lingua-purple">
-                Change
+              <Ionicons name="notifications-outline" size={20} color="#1E1B4B" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Section 1: Daily Goal Card */}
+        <View className="relative mb-5 flex-row items-center justify-between rounded-[24px] bg-[#FFF9F2] p-5 border border-[#FFF0E0]/60">
+          <View className="flex-1 pr-4">
+            <Text className="font-['Poppins-Medium'] text-sm text-[#8E8A9F]">
+              Daily goal
+            </Text>
+
+            <View className="mt-1 flex-row items-baseline">
+              <Text className="font-['Poppins-Bold'] text-2xl text-[#1E1B4B]">
+                15
+              </Text>
+              <Text className="font-['Poppins-Medium'] text-sm text-[#8E8A9F] ml-1">
+                / 20 XP
+              </Text>
+            </View>
+
+            {/* Progress Bar */}
+            <View className="mt-3.5 h-3 w-44 rounded-full bg-[#FFE8D6] overflow-hidden">
+              <View className="h-full w-[75%] rounded-full bg-[#FF9600]" />
+            </View>
+          </View>
+
+          {/* Treasure Illustration */}
+          <Image
+            source={images.treasure}
+            className="h-20 w-24"
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Section 2: Continue Learning Hero Banner */}
+        <View className="relative mb-6 overflow-hidden rounded-[24px] bg-[#5A31E1] p-5 shadow-sm">
+          {/* Palace Background Illustration */}
+          <Image
+            source={images.palace}
+            className="absolute right-0 bottom-0 h-36 w-40 opacity-95"
+            resizeMode="contain"
+          />
+
+          <View className="z-10 max-w-[65%]">
+            <Text className="font-['Poppins-Medium'] text-xs text-white/80">
+              Continue learning
+            </Text>
+
+            <Text className="font-['Poppins-Bold'] text-2xl text-white mt-1">
+              {selectedLanguage?.name || "Spanish"}
+            </Text>
+
+            <Text className="font-['Poppins-Regular'] text-xs text-white/80 mt-0.5 mb-5">
+              {currentUnitText}
+            </Text>
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push("/(tabs)/learn")}
+              className="rounded-full bg-white px-6 py-2.5 self-start shadow-sm"
+            >
+              <Text className="font-['Poppins-Bold'] text-sm text-[#5A31E1]">
+                Continue
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Section 3: Today's Plan */}
+        <View className="mb-6">
+          <View className="mb-3.5 flex-row items-center justify-between">
+            <Text className="font-['Poppins-Bold'] text-lg text-[#1E1B4B]">
+              Today's plan
+            </Text>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push("/(tabs)/learn")}
+            >
+              <Text className="font-['Poppins-Bold'] text-sm text-[#6C4EF5]">
+                View all
               </Text>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={async () => {
-              await clearSelectedLanguage();
-            }}
-            className="mt-3 flex-row items-center justify-center rounded-xl bg-error/10 py-2 px-3 border border-error/20"
-          >
-            <Text className="font-['Poppins-Medium'] text-xs text-error">
-              🗑️ Clear Language Storage (Test Selection Re-routing)
-            </Text>
-          </TouchableOpacity>
+          <View className="gap-3">
+            {/* Plan Item 1: Lesson (Completed) */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push("/(tabs)/learn")}
+              className="flex-row items-center justify-between rounded-2xl bg-white p-3 border border-gray-100 shadow-sm"
+            >
+              <View className="flex-row items-center gap-3.5">
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-[#6C4EF5]">
+                  <Ionicons name="book" size={22} color="#FFFFFF" />
+                </View>
+                <View>
+                  <Text className="font-['Poppins-Bold'] text-base text-[#1E1B4B]">
+                    Lesson
+                  </Text>
+                  <Text className="font-['Poppins-Regular'] text-xs text-[#8E8A9F] mt-0.5">
+                    {firstLessonTitle}
+                  </Text>
+                </View>
+              </View>
+
+              <Ionicons name="checkmark-circle" size={26} color="#6C4EF5" />
+            </TouchableOpacity>
+
+            {/* Plan Item 2: AI Conversation */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push("/(tabs)/chat")}
+              className="flex-row items-center justify-between rounded-2xl bg-white p-3 border border-gray-100 shadow-sm"
+            >
+              <View className="flex-row items-center gap-3.5">
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-[#6C4EF5]">
+                  <Ionicons name="headset" size={22} color="#FFFFFF" />
+                </View>
+                <View>
+                  <Text className="font-['Poppins-Bold'] text-base text-[#1E1B4B]">
+                    AI Conversation
+                  </Text>
+                  <Text className="font-['Poppins-Regular'] text-xs text-[#8E8A9F] mt-0.5">
+                    Talk about your day
+                  </Text>
+                </View>
+              </View>
+
+              <Ionicons name="ellipse-outline" size={26} color="#CBD5E1" />
+            </TouchableOpacity>
+
+            {/* Plan Item 3: New words */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push("/(tabs)/learn")}
+              className="flex-row items-center justify-between rounded-2xl bg-white p-3 border border-gray-100 shadow-sm"
+            >
+              <View className="flex-row items-center gap-3.5">
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-[#FF5C5C]">
+                  <Ionicons name="chatbubbles" size={22} color="#FFFFFF" />
+                </View>
+                <View>
+                  <Text className="font-['Poppins-Bold'] text-base text-[#1E1B4B]">
+                    New words
+                  </Text>
+                  <Text className="font-['Poppins-Regular'] text-xs text-[#8E8A9F] mt-0.5">
+                    10 words
+                  </Text>
+                </View>
+              </View>
+
+              <Ionicons name="ellipse-outline" size={26} color="#CBD5E1" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Onboarding Navigation Card */}
+        {/* Section 4: AI Video Call ("Next up") Card */}
         <TouchableOpacity
           activeOpacity={0.9}
-          onPress={() => router.push("/onboarding")}
-          className="mb-4 flex-row items-center justify-between rounded-2xl bg-lingua-purple p-4"
+          onPress={() => router.push("/(tabs)/ai-teacher")}
+          className="flex-row items-center justify-between rounded-[24px] bg-[#EFF9EC] p-4.5 border border-[#DCFCE7]/60 mb-4"
         >
-          <View className="flex-row items-center gap-3">
-            <Image
-              source={images.mascot}
-              className="h-12 w-12"
-              resizeMode="contain"
-            />
-            <View>
-              <Text className="font-['Poppins-Bold'] text-base text-white">
-                View Onboarding Screen
-              </Text>
-              <Text className="font-['Poppins-Regular'] text-xs text-white/80">
-                Your AI language teacher · muolingo
-              </Text>
-            </View>
+          <View>
+            <Text className="font-['Poppins-Medium'] text-xs text-[#52796F]">
+              Next up
+            </Text>
+            <Text className="font-['Poppins-Bold'] text-base text-[#1E1B4B] mt-0.5">
+              AI Video Call
+            </Text>
+            <Text className="font-['Poppins-Regular'] text-xs text-[#6B7280] mt-0.5">
+              Practice speaking
+            </Text>
           </View>
-          <View className="h-8 w-8 items-center justify-center rounded-full bg-white/20">
-            <Text className="font-['Poppins-Bold'] text-lg text-white">›</Text>
-          </View>
-        </TouchableOpacity>
 
-        {/* Language Selection Navigation Card */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => router.push("/language-select")}
-          className="mb-4 flex-row items-center justify-between rounded-2xl bg-[#F0FDF4] border border-[#DCFCE7] p-4"
-        >
-          <View className="flex-row items-center gap-3">
+          {/* Right Avatar & Call Action Button */}
+          <View className="flex-row items-center gap-2">
             <Image
-              source={images.earth}
-              className="h-12 w-12 rounded-xl"
-              resizeMode="contain"
+              source={{
+                uri: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop",
+              }}
+              className="h-14 w-14 rounded-full border-2 border-white shadow-sm"
+              resizeMode="cover"
             />
-            <View>
-              <Text className="font-['Poppins-Bold'] text-base text-[#166534]">
-                Choose Language
-              </Text>
-              <Text className="font-['Poppins-Regular'] text-xs text-[#15803D]">
-                Spanish, French, Japanese, German & more
-              </Text>
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-[#58CC02] shadow-md">
+              <Ionicons name="videocam" size={20} color="#FFFFFF" />
             </View>
-          </View>
-          <View className="h-8 w-8 items-center justify-center rounded-full bg-[#DCFCE7]">
-            <Text className="font-['Poppins-Bold'] text-lg text-[#166534]">›</Text>
           </View>
         </TouchableOpacity>
       </ScrollView>
@@ -177,9 +306,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: 28,
   },
   centerContainer: {
     flex: 1,
