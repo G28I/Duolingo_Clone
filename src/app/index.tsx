@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -17,16 +18,17 @@ export default function DesignSystemScreen() {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const clerk = useClerk();
+  const { signOut } = clerk;
   const [streakCount, setStreakCount] = useState(5);
   const [activeTab, setActiveTab] = useState<"all" | "colors" | "typography" | "components">("all");
 
-  if (!isLoaded) {
-    return null;
-  }
-
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/onboarding" />;
+  if (!isLoaded || !isSignedIn) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#6C4EF5" />
+      </View>
+    );
   }
 
   return (
@@ -569,5 +571,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 40,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
   },
 });

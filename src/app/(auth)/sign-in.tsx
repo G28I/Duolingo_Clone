@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useSignIn, useSSO } from "@clerk/expo";
+import * as AuthSession from "expo-auth-session";
+import { useAuth, useSignIn, useSSO } from "@clerk/expo";
 import { images } from "@/constants/images";
 import VerificationModal from "@/components/VerificationModal";
 
@@ -19,6 +21,7 @@ export default function SignInScreen() {
   const router = useRouter();
   const { signIn, errors, fetchStatus } = useSignIn();
   const { startSSOFlow } = useSSO();
+  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
 
   const [email, setEmail] = useState("");
   const [showVerification, setShowVerification] = useState(false);
@@ -73,16 +76,7 @@ export default function SignInScreen() {
       }
 
       if (signIn.status === "complete") {
-        const { error: finalizeError } = await signIn.finalize({
-          navigate: ({ session, decorateUrl }) => {
-            const url = decorateUrl("/");
-            if (url.startsWith("http")) {
-              window.location.href = url;
-            } else {
-              router.replace("/");
-            }
-          },
-        });
+        const { error: finalizeError } = await signIn.finalize();
 
         if (finalizeError) {
           return {
@@ -91,6 +85,7 @@ export default function SignInScreen() {
           };
         }
 
+        router.replace("/");
         return { success: true };
       }
 
@@ -117,50 +112,57 @@ export default function SignInScreen() {
 
   const handleSocialAuth = async (strategy: "oauth_google" | "oauth_facebook" | "oauth_apple") => {
     setErrorMessage("");
+    setIsSubmitting(true);
     try {
-      const { createdSessionId, setActive, signUp, signIn } = await startSSOFlow({
+      console.log(`[SocialAuth] Starting ${strategy} via useSSO...`);
+
+      const redirectUrl = AuthSession.makeRedirectUri({ path: "sso-callback" });
+      console.log(`[SocialAuth] Redirect URL: ${redirectUrl}`);
+
+      const { createdSessionId, setActive, signUp: ssoSignUp, signIn: ssoSignIn } = await startSSOFlow({
         strategy,
+        redirectUrl,
       });
 
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
+      console.log(
+        `[SocialAuth] startSSOFlow finished. createdSessionId: ${createdSessionId}, signUp status: ${ssoSignUp?.status}, signIn status: ${ssoSignIn?.status}`
+      );
+
+      const targetSessionId = createdSessionId || ssoSignUp?.createdSessionId || ssoSignIn?.createdSessionId;
+
+      if (targetSessionId && setActive) {
+        console.log(`[SocialAuth] Activating session: ${targetSessionId}`);
+        await setActive({ session: targetSessionId });
         router.replace("/");
         return;
       }
 
-      // Handle missing requirements (such as username required by Clerk instance)
-      if (signUp && signUp.status === "missing_requirements") {
-        const missing = signUp.missingFields || [];
-        const updatePayload: Record<string, any> = {};
-
-        if (missing.includes("username")) {
-          const emailPrefix = (signUp.emailAddress || "user")
-            .split("@")[0]
-            .replace(/[^a-zA-Z0-9_]/g, "");
-          const cleanPrefix = emailPrefix.length >= 3 ? emailPrefix : `user_${emailPrefix}`;
-          updatePayload.username = `${cleanPrefix}_${Math.floor(1000 + Math.random() * 9000)}`;
-        }
-
-        const completeSignUp = await signUp.update(updatePayload);
-        if (completeSignUp.status === "complete" && completeSignUp.createdSessionId && setActive) {
-          await setActive({ session: completeSignUp.createdSessionId });
-          router.replace("/");
-          return;
-        }
-      }
-
-      if (signIn && signIn.status === "complete" && signIn.createdSessionId && setActive) {
-        await setActive({ session: signIn.createdSessionId });
+      // Transfer flow: SSO resolved an existing sign-in instead
+      if (ssoSignIn && ssoSignIn.status === "complete" && ssoSignIn.createdSessionId && setActive) {
+        console.log("[SocialAuth] Transfer flow resolved existing signIn. Activating session...");
+        await setActive({ session: ssoSignIn.createdSessionId });
         router.replace("/");
         return;
       }
     } catch (err: any) {
-      console.error(`Social auth (${strategy}) error:`, err);
+      console.error(`[SocialAuth] Error (${strategy}):`, JSON.stringify(err, null, 2));
+
+      // User cancellation is not an error — silently swallow it
+      if (
+        err.code === "SIGN_IN_CANCELLED" ||
+        err.message?.includes("cancelled") ||
+        err.message?.includes("closed")
+      ) {
+        return;
+      }
+
       if (err.errors?.[0]?.message) {
         setErrorMessage(err.errors[0].message);
       } else if (err.message) {
         setErrorMessage(err.message);
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -328,6 +330,8 @@ export default function SignInScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+        {/* Required for Clerk bot protection on web */}
+        <View nativeID="clerk-captcha" />
       </ScrollView>
 
       {/* Verification Code Modal */}
