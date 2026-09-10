@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { useAppFonts } from "@/hooks/useAppFonts";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -16,19 +17,28 @@ if (!publishableKey) {
 
 function InitialLayout() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { selectedLanguage, hasHydrated } = useLanguageStore();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !hasHydrated) return;
 
     const inAuthGroup = segments[0] === "(auth)";
     const inSsoCallback = segments[0] === "sso-callback";
+    const inLanguageSelect = segments[0] === "language-select";
 
     if (isSignedIn) {
-      // Authenticated users in auth screens or callback redirect to home / app
-      if (inAuthGroup || inSsoCallback) {
-        router.replace("/");
+      if (!selectedLanguage) {
+        // Authenticated user without selected language must be on language-select
+        if (!inLanguageSelect) {
+          router.replace("/language-select");
+        }
+      } else {
+        // Authenticated user with selected language should leave auth / callback / language-select
+        if (inAuthGroup || inSsoCallback || inLanguageSelect) {
+          router.replace("/(tabs)/index");
+        }
       }
     } else {
       // Unauthenticated users attempting to access protected screens redirect to onboarding
@@ -36,7 +46,7 @@ function InitialLayout() {
         router.replace("/(auth)/onboarding");
       }
     }
-  }, [isLoaded, isSignedIn, segments, router]);
+  }, [isLoaded, isSignedIn, selectedLanguage, hasHydrated, segments, router]);
 
   return (
     <Stack screenOptions={{ headerShown: false }} />

@@ -91,7 +91,7 @@ export default function SignUpScreen() {
         };
       }
 
-      router.replace("/");
+      router.replace("/(tabs)/index");
       return { success: true };
     } catch (err: any) {
       return {
@@ -131,7 +131,7 @@ export default function SignUpScreen() {
       if (targetSessionId && setActive) {
         console.log(`[SocialAuth] Activating session: ${targetSessionId}`);
         await setActive({ session: targetSessionId });
-        router.replace("/");
+        router.replace("/(tabs)/index");
         return;
       }
 
@@ -139,7 +139,7 @@ export default function SignUpScreen() {
       if (ssoSignIn && ssoSignIn.status === "complete" && ssoSignIn.createdSessionId && setActive) {
         console.log("[SocialAuth] Transfer flow resolved existing signIn. Activating session...");
         await setActive({ session: ssoSignIn.createdSessionId });
-        router.replace("/");
+        router.replace("/(tabs)/index");
         return;
       }
     } catch (err: any) {

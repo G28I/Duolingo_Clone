@@ -13,10 +13,14 @@ import { useRouter } from "expo-router";
 import { images } from "@/constants/images";
 import { languages } from "@/data/languages";
 import { FlagCircle } from "@/components/FlagCircle";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 export default function LanguageSelectionScreen() {
   const router = useRouter();
-  const [selectedLanguageId, setSelectedLanguageId] = useState<string>("es");
+  const { selectedLanguage, setSelectedLanguage } = useLanguageStore();
+  const [selectedLanguageId, setSelectedLanguageId] = useState<string>(
+    selectedLanguage?.id || "es"
+  );
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const filteredLanguages = languages.filter(
@@ -26,12 +30,10 @@ export default function LanguageSelectionScreen() {
   );
 
   const handleConfirm = () => {
-    // Navigate back to the caller screen or home
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/");
-    }
+    const targetLang =
+      languages.find((l) => l.id === selectedLanguageId) || languages[0];
+    setSelectedLanguage(targetLang);
+    router.replace("/(tabs)/index");
   };
 
   return (
@@ -41,7 +43,7 @@ export default function LanguageSelectionScreen() {
         <View className="flex-row items-center justify-between border-b border-border/30 px-5 pt-2 pb-3">
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)/index"))}
             className="h-10 w-10 items-center justify-center rounded-full"
           >
             <Text className="font-['Poppins-Bold'] text-2xl text-text-primary">
