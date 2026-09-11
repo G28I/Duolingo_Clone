@@ -2,13 +2,15 @@ import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Image,
+  Platform,
   ScrollView,
+  StatusBar as RNStatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth, useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,9 +20,15 @@ import { getLessonsForLanguage, getUnitsForLanguage } from "@/data";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const { selectedLanguage } = useLanguageStore();
+  const insets = useSafeAreaInsets();
+
+  const topInset = Math.max(
+    insets.top,
+    Platform.OS === "android" ? (RNStatusBar.currentHeight || 28) : 0
+  );
 
   const userFirstName = useMemo(() => {
     return user?.firstName || user?.username || "Alex";
@@ -67,29 +75,35 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["left", "right", "bottom"]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Top Header Bar */}
-        <View className="mb-5 flex-row items-center justify-between pt-1">
+        <View
+          style={{ paddingTop: Math.max(topInset, 12) }}
+          className="mb-5 flex-row items-center justify-between"
+        >
           {/* Left: Language Flag + Greeting */}
-          <View className="flex-row items-center gap-2.5">
-            <View className="h-9 w-9 items-center justify-center rounded-full bg-gray-100 shadow-sm overflow-hidden border border-gray-200">
+          <View className="flex-row items-center gap-2 flex-1 mr-2">
+            <View className="h-9 w-9 items-center justify-center rounded-full bg-gray-100 shadow-sm overflow-hidden border border-gray-200 flex-shrink-0">
               <Text className="text-xl">
-                {selectedLanguage?.flag || "🇪🇸"}
+                {selectedLanguage?.flag || "🇯🇵"}
               </Text>
             </View>
-            <Text className="font-['Poppins-Bold'] text-xl text-[#1E1B4B]">
+            <Text
+              numberOfLines={1}
+              className="font-['Poppins-Bold'] text-lg text-[#1E1B4B] flex-1"
+            >
               {greetingPrefix}, {userFirstName}! 👋
             </Text>
           </View>
 
-          {/* Right: Streak & Notifications */}
-          <View className="flex-row items-center gap-3">
+          {/* Right: Streak & Notifications & Sign Out */}
+          <View className="flex-row items-center gap-2 flex-shrink-0">
             {/* Streak Badge */}
-            <View className="flex-row items-center gap-1.5 rounded-full bg-white px-3 py-1 border border-gray-100 shadow-sm">
+            <View className="flex-row items-center gap-1.5 rounded-full bg-white px-2.5 py-1 border border-gray-100 shadow-sm">
               <Image
                 source={images.streakFire}
                 style={styles.streakIcon}
@@ -105,7 +119,17 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               className="h-9 w-9 items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm"
             >
-              <Ionicons name="notifications-outline" size={20} color="#1E1B4B" />
+              <Ionicons name="notifications-outline" size={18} color="#1E1B4B" />
+            </TouchableOpacity>
+
+            {/* Sign Out Button */}
+            <TouchableOpacity
+              onPress={() => signOut()}
+              activeOpacity={0.7}
+              accessibilityLabel="Sign Out"
+              className="h-9 w-9 items-center justify-center rounded-full bg-red-50 border border-red-100 shadow-sm active:opacity-80"
+            >
+              <Ionicons name="log-out-outline" size={18} color="#EF4444" />
             </TouchableOpacity>
           </View>
         </View>
@@ -308,7 +332,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 0,
     paddingBottom: 28,
   },
   centerContainer: {
