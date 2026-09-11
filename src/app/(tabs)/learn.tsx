@@ -142,7 +142,7 @@ export default function LearnScreen() {
         <View className="bg-slate-100 rounded-2xl p-1.5 flex-row mb-6 border border-slate-200/60">
           <TouchableOpacity
             onPress={() => setActiveTab("lessons")}
-            className={`flex-1 py-2.5 items-center justify-center rounded-xl transition-all ${
+            className={`flex-1 py-2.5 items-center justify-center rounded-xl transition-all will-change-variable ${
               activeTab === "lessons"
                 ? "bg-[#6C4EF5] shadow-sm"
                 : "bg-transparent"
@@ -160,7 +160,7 @@ export default function LearnScreen() {
 
           <TouchableOpacity
             onPress={() => setActiveTab("practice")}
-            className={`flex-1 py-2.5 items-center justify-center rounded-xl transition-all ${
+            className={`flex-1 py-2.5 items-center justify-center rounded-xl transition-all will-change-variable ${
               activeTab === "practice"
                 ? "bg-[#6C4EF5] shadow-sm"
                 : "bg-transparent"
@@ -200,7 +200,7 @@ export default function LearnScreen() {
                   key={lesson.id}
                   onPress={() => router.push(`/lesson/${lesson.id}` as any)}
                   activeOpacity={0.85}
-                  className={`rounded-2xl p-4 mb-3.5 flex-row items-center border ${
+                  className={`rounded-2xl p-4 mb-3.5 flex-row items-center border will-change-variable ${
                     isInProgress
                       ? "bg-[#F8F7FF] border-[#6C4EF5] border-2 shadow-md"
                       : isCompleted
