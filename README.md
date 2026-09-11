@@ -1,6 +1,16 @@
-# Welcome to your Expo app 👋
+# Duolingo Clone — AI Language Learning App 🦉
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+An interactive AI-powered language learning mobile app built with **Expo SDK 57**, **React Native**, **NativeWind (Tailwind CSS v4)**, **Clerk Authentication**, **Zustand**, and **Expo Router**.
+
+---
+
+## Features Implemented
+- 🔐 **Clerk Authentication**: Google SSO, Email/Password & Email verification code modal.
+- 🌐 **Zustand Store**: Language selection state persisted with `@react-native-async-storage/async-storage`.
+- 📱 **Custom Bottom Tab Bar**: Reanimated spring sliding active indicator supporting 5 tabs (`Home`, `Learn`, `AI Teacher`, `Chat`, `Profile`).
+- 🎨 **Home Screen UI**: Pixel-perfect layout with Clerk user profile greeting, streak counter, daily goal progress card, continue learning hero card, today's plan, and AI video call card.
+
+---
 
 ## Get started
 
