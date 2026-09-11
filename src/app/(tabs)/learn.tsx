@@ -33,12 +33,15 @@ export default function LearnScreen() {
     return getUnitsForLanguage(currentLang.id);
   }, [currentLang.id]);
 
-  // Default to Unit 3 ("At the Café") if present, else first unit
+  // Select first unit with incomplete lessons, fallback to first available unit
   const activeUnit = useMemo(() => {
     if (!currentUnits.length) return null;
-    const unit3 = currentUnits.find((u) => u.order === 3 || u.title.toLowerCase().includes("café"));
-    return unit3 || currentUnits[0];
-  }, [currentUnits]);
+    const incompleteUnit = currentUnits.find((u) => {
+      const lessons = getLessonsForUnit(u.id);
+      return lessons.some((l) => !completedLessonIds.includes(l.id));
+    });
+    return incompleteUnit || currentUnits[0];
+  }, [currentUnits, completedLessonIds]);
 
   // Get lessons for active unit
   const unitLessons = useMemo(() => {
@@ -316,6 +319,10 @@ export default function LearnScreen() {
 
             {/* Flashcards Practice Card */}
             <TouchableOpacity
+              onPress={() => {
+                const vocabLesson = unitLessons.find((l) => l.type === "vocabulary_review") || unitLessons[0];
+                if (vocabLesson) router.push(`/lesson/${vocabLesson.id}` as any);
+              }}
               className="bg-white border border-slate-200 rounded-2xl p-5 mb-4 flex-row items-center justify-between shadow-sm"
               activeOpacity={0.85}
             >
@@ -334,6 +341,10 @@ export default function LearnScreen() {
 
             {/* Listening & Pronunciation */}
             <TouchableOpacity
+              onPress={() => {
+                const audioLesson = unitLessons.find((l) => l.type === "audio") || unitLessons[1] || unitLessons[0];
+                if (audioLesson) router.push(`/lesson/${audioLesson.id}` as any);
+              }}
               className="bg-white border border-slate-200 rounded-2xl p-5 mb-4 flex-row items-center justify-between shadow-sm"
               activeOpacity={0.85}
             >

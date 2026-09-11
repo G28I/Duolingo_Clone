@@ -1106,7 +1106,7 @@ export const lessons: Lesson[] = [
     xpReward: 30,
     estimatedDurationMinutes: 5,
     goals: [{ id: "g-fr-1-4", text: "Find locations in France" }],
-    vocabulary: [{ id: "v-fr-302", term: "Où est...?", translation: "Where is...?", partOfSpeech: "phrase", exampleSentence: "Où est el métro ?", exampleTranslation: "Where is the metro?" }],
+    vocabulary: [{ id: "v-fr-302", term: "Où est...?", translation: "Where is...?", partOfSpeech: "phrase", exampleSentence: "Où est le métro ?", exampleTranslation: "Where is the metro?" }],
     phrases: [{ id: "p-fr-302", phrase: "Où est la gare ?", translation: "Where is the station?", context: "Asking location" }],
     activities: [{ id: "act-fr-1-4-1", type: "multiple_choice", prompt: "Ask location", question: "How do you ask 'Where is'?", options: ["Où est...?", "Merci", "Pardon"], correctIndex: 0 }]
   },

@@ -14,10 +14,9 @@ interface LessonState {
 export const useLessonStore = create<LessonState>()(
   persist(
     (set, get) => ({
-      // Pre-fill first lesson for Spanish, French, Japanese as completed for rich visual demonstration
-      completedLessonIds: ["lesson-es-1-1", "lesson-fr-1-1", "lesson-ja-1-1"],
-      userXP: 120,
-      streakDays: 5,
+      completedLessonIds: [],
+      userXP: 0,
+      streakDays: 0,
 
       completeLesson: (lessonId: string, xpEarned: number) => {
         const currentCompleted = get().completedLessonIds;
