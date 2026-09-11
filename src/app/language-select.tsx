@@ -33,7 +33,7 @@ export default function LanguageSelectionScreen() {
     const targetLang =
       languages.find((l) => l.id === selectedLanguageId) || languages[0];
     setSelectedLanguage(targetLang);
-    router.replace("/(tabs)/index");
+    router.replace("/(tabs)");
   };
 
   return (
@@ -43,7 +43,7 @@ export default function LanguageSelectionScreen() {
         <View className="flex-row items-center justify-between border-b border-border/30 px-5 pt-2 pb-3">
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)/index"))}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
             className="h-10 w-10 items-center justify-center rounded-full"
           >
             <Text className="font-['Poppins-Bold'] text-2xl text-text-primary">

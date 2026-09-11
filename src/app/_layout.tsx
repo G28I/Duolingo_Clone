@@ -37,7 +37,7 @@ function InitialLayout() {
       } else {
         // Authenticated user with selected language should leave auth / callback / language-select
         if (inAuthGroup || inSsoCallback || inLanguageSelect) {
-          router.replace("/(tabs)/index");
+          router.replace("/(tabs)");
         }
       }
     } else {

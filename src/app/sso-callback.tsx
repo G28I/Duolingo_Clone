@@ -13,7 +13,7 @@ export default function SSOCallbackScreen() {
     if (!isLoaded) return;
 
     if (isSignedIn) {
-      router.replace("/(tabs)/index");
+      router.replace("/(tabs)");
       return;
     }
 
@@ -21,8 +21,8 @@ export default function SSOCallbackScreen() {
       if (clerk && typeof (clerk as any).handleRedirectCallback === "function") {
         try {
           await (clerk as any).handleRedirectCallback({
-            signInFallbackRedirectUrl: "/(tabs)/index",
-            signUpFallbackRedirectUrl: "/(tabs)/index",
+            signInFallbackRedirectUrl: "/(tabs)",
+            signUpFallbackRedirectUrl: "/(tabs)",
           });
         } catch (err: any) {
           console.error("[SSOCallback] handleRedirectCallback error:", err);
