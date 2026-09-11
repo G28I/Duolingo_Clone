@@ -33,13 +33,9 @@ export default function LearnScreen() {
     return getUnitsForLanguage(currentLang.id);
   }, [currentLang.id]);
 
-  // Select active unit (defaults to Unit 3 "At the Café" if present, else first unit with incomplete lessons)
+  // Select active unit: first unit with incomplete lessons, falling back to first available unit
   const activeUnit = useMemo(() => {
     if (!currentUnits.length) return null;
-    const cafeUnit = currentUnits.find(
-      (u) => u.order === 3 || u.title.toLowerCase().includes("café") || u.title.toLowerCase().includes("cafe")
-    );
-    if (cafeUnit) return cafeUnit;
 
     const incompleteUnit = currentUnits.find((u) => {
       const lessons = getLessonsForUnit(u.id);
@@ -47,6 +43,7 @@ export default function LearnScreen() {
     });
     return incompleteUnit || currentUnits[0];
   }, [currentUnits, completedLessonIds]);
+
 
   // Get lessons for active unit
   const unitLessons = useMemo(() => {
