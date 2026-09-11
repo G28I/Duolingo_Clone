@@ -92,7 +92,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-1.5 rounded-full bg-white px-3 py-1 border border-gray-100 shadow-sm">
               <Image
                 source={images.streakFire}
-                className="h-5 w-5"
+                style={styles.streakIcon}
                 resizeMode="contain"
               />
               <Text className="font-['Poppins-Bold'] text-sm text-[#1E1B4B]">
@@ -135,7 +135,7 @@ export default function HomeScreen() {
           {/* Treasure Illustration */}
           <Image
             source={images.treasure}
-            className="h-20 w-24"
+            style={styles.treasureImage}
             resizeMode="contain"
           />
         </View>
@@ -145,7 +145,7 @@ export default function HomeScreen() {
           {/* Palace Background Illustration */}
           <Image
             source={images.palace}
-            className="absolute right-0 bottom-0 h-36 w-40 opacity-95"
+            style={styles.palaceImage}
             resizeMode="contain"
           />
 
@@ -287,7 +287,8 @@ export default function HomeScreen() {
               source={{
                 uri: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop",
               }}
-              className="h-14 w-14 rounded-full border-2 border-white shadow-sm"
+              style={styles.avatarImage}
+              className="border-2 border-white shadow-sm"
               resizeMode="cover"
             />
             <View className="h-10 w-10 items-center justify-center rounded-full bg-[#58CC02] shadow-md">
@@ -315,5 +316,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
+  },
+  streakIcon: {
+    width: 20,
+    height: 20,
+  },
+  treasureImage: {
+    width: 96,
+    height: 80,
+  },
+  palaceImage: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: 160,
+    height: 144,
+    opacity: 0.95,
+  },
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
 });
