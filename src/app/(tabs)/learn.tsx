@@ -178,6 +178,7 @@ export default function LearnScreen() {
                 return (
                   <TouchableOpacity
                     key={lesson.id}
+                    disabled={!isCompleted && !isInProgress}
                     onPress={() => {
                       if (!isCompleted && !isInProgress) return;
                       router.push(`/lesson/${lesson.id}` as any);
