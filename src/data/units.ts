@@ -68,4 +68,32 @@ export const units: Unit[] = [
     lessonIds: ["lesson-de-1-1", "lesson-de-1-2", "lesson-de-1-3", "lesson-de-1-4", "lesson-de-1-5", "lesson-de-1-6"],
     totalXP: 185,
   },
+
+  // Korean Units
+  {
+    id: "unit-ko-1",
+    languageId: "ko",
+    order: 1,
+    title: "Unit 1: First Steps in Seoul",
+    description:
+      "Learn essential Korean greetings, self-introductions, and daily polite expressions.",
+    icon: "sparkles",
+    color: "#8B5CF6",
+    lessonIds: ["lesson-ko-1-1", "lesson-ko-1-2", "lesson-ko-1-3", "lesson-ko-1-4", "lesson-ko-1-5", "lesson-ko-1-6"],
+    totalXP: 185,
+  },
+
+  // Chinese Units
+  {
+    id: "unit-zh-1",
+    languageId: "zh",
+    order: 1,
+    title: "Unit 1: Beijing Greetings",
+    description:
+      "Master essential Mandarin salutations, tones, and daily polite expressions.",
+    icon: "sparkles",
+    color: "#EF4444",
+    lessonIds: ["lesson-zh-1-1", "lesson-zh-1-2", "lesson-zh-1-3", "lesson-zh-1-4", "lesson-zh-1-5", "lesson-zh-1-6"],
+    totalXP: 185,
+  },
 ];
