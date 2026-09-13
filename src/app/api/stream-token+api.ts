@@ -11,7 +11,7 @@ function getStreamServerConfig() {
 
   return {
     apiKey,
-    serverClient: new StreamClient(apiKey, apiSecret),
+    serverClient: new StreamClient(apiKey, apiSecret, { timeout: 15000 }),
   };
 }
 
