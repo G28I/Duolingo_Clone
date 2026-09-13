@@ -41,36 +41,47 @@ export function AITutorLessonScreen({
     title: "Language Coach",
   };
 
+  const langCode = (language?.id || language?.code || "fr").toLowerCase();
+  const isEs = langCode.startsWith("es");
+  const isJa = langCode.startsWith("ja");
+  const isDe = langCode.startsWith("de");
+  const isKo = langCode.startsWith("ko");
+  const isZh = langCode.startsWith("zh");
+
   const firstPhrase = lesson?.phrases?.[0];
+
+  const defaultUtterance = isEs
+    ? "¡Hola! ¿Cómo estás?"
+    : isJa
+    ? "こんにちは！お元気ですか？"
+    : isDe
+    ? "Hallo! Wie geht es dir?"
+    : isKo
+    ? "안녕하세요! 어떻게 지내세요?"
+    : isZh
+    ? "你好！你好吗？"
+    : "Bonjour ! Comment allez-vous ?";
+
+  const defaultTranslation = "Hello! How are you?";
+
+  const praiseText = isEs
+    ? "¡Muy bien! That was great! 👏"
+    : isJa
+    ? "素晴らしい！ That was great! 👏"
+    : isDe
+    ? "Sehr gut! That was great! 👏"
+    : isKo
+    ? "잘했어요! That was great! 👏"
+    : isZh
+    ? "很好！ That was great! 👏"
+    : "Très bien ! That was great! 👏";
+
   const activePhrase = {
-    tutorUtterance:
-      firstPhrase?.phrase ||
-      (language?.code === "es"
-        ? "¡Hola! ¿Cómo estás?"
-        : language?.code === "ja"
-        ? "こんにちは！お元気ですか？"
-        : language?.code === "de"
-        ? "Hallo! Wie geht es dir?"
-        : "Bonjour ! Comment allez-vous ?"),
-    tutorTranslation: firstPhrase?.translation || "Hello! How are you?",
-    praise:
-      language?.code === "es"
-        ? "¡Muy bien! That was great! 👏"
-        : language?.code === "ja"
-        ? "素晴らしい！ That was great! 👏"
-        : language?.code === "de"
-        ? "Sehr gut! That was great! 👏"
-        : "Très bien ! That was great! 👏",
-    learnerPrompt:
-      firstPhrase?.phrase ||
-      (language?.code === "es"
-        ? "¡Hola! ¿Cómo estás?"
-        : language?.code === "ja"
-        ? "こんにちは！お元気ですか？"
-        : language?.code === "de"
-        ? "Hallo! Wie geht es dir?"
-        : "Bonjour ! Comment allez-vous ?"),
-    learnerTranslation: firstPhrase?.translation || "Hello! How are you?",
+    tutorUtterance: firstPhrase?.phrase || defaultUtterance,
+    tutorTranslation: firstPhrase?.translation || defaultTranslation,
+    praise: praiseText,
+    learnerPrompt: firstPhrase?.phrase || defaultUtterance,
+    learnerTranslation: firstPhrase?.translation || defaultTranslation,
   };
 
   const handleEndCall = () => {
