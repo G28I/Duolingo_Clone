@@ -33,14 +33,20 @@ async def create_agent(**kwargs) -> Agent:
             api_key=api_key,
             base_url="https://api.groq.com/openai/v1",
         )
-        tts = openai.TTS(api_key=api_key)
-        return Agent(
-            edge=getstream.Edge(),
-            agent_user=User(id="ai-teacher", name="AI Language Teacher"),
-            instructions=DEFAULT_TEACHER_INSTRUCTIONS,
-            llm=llm,
-            tts=tts,
-        )
+        
+        # Groq handles LLM chat completions. Check if an OpenAI key is available for TTS.
+        valid_openai_tts_key = os.getenv("OPENAI_API_KEY") if (os.getenv("OPENAI_API_KEY") and not os.getenv("OPENAI_API_KEY", "").startswith("gsk_")) else None
+        agent_kwargs = {
+            "edge": getstream.Edge(),
+            "agent_user": User(id="ai-teacher", name="AI Language Teacher"),
+            "instructions": DEFAULT_TEACHER_INSTRUCTIONS,
+            "llm": llm,
+        }
+        if valid_openai_tts_key:
+            print("[AI Teacher Agent] Adding OpenAI TTS for speech output...")
+            agent_kwargs["tts"] = openai.TTS(api_key=valid_openai_tts_key)
+            
+        return Agent(**agent_kwargs)
     else:
         print("[AI Teacher Agent] Initializing OpenAI Realtime LLM...")
         llm = openai.Realtime(
