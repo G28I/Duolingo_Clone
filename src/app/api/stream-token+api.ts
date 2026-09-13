@@ -15,6 +15,18 @@ function getStreamServerConfig() {
   };
 }
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 1): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: any) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return withRetry(fn, retries - 1);
+    }
+    throw err;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { apiKey, serverClient } = getStreamServerConfig();
@@ -37,13 +49,15 @@ export async function POST(request: Request) {
 
     // Upsert AI Teacher agent user with admin role so it has full audio publishing permissions
     try {
-      await serverClient.upsertUsers([
-        {
-          id: "ai-teacher",
-          name: language?.aiTeacherPersona?.name || "AI Teacher",
-          role: "admin",
-        },
-      ]);
+      await withRetry(() =>
+        serverClient.upsertUsers([
+          {
+            id: "ai-teacher",
+            name: language?.aiTeacherPersona?.name || "AI Teacher",
+            role: "admin",
+          },
+        ])
+      );
     } catch (upsertErr) {
       console.warn("[Stream API] Warning upserting ai-teacher admin user:", upsertErr);
     }
@@ -87,18 +101,20 @@ export async function POST(request: Request) {
     // Upsert call details with custom metadata & audio permission overrides
     try {
       const call = serverClient.video.call("default", callId);
-      await call.getOrCreate({
-        data: {
-          created_by_id: userId,
-          settings_override: {
-            audio: {
-              mic_default_on: true,
-              default_device: "speaker",
+      await withRetry(() =>
+        call.getOrCreate({
+          data: {
+            created_by_id: userId,
+            settings_override: {
+              audio: {
+                mic_default_on: true,
+                default_device: "speaker",
+              },
             },
+            custom: customData,
           },
-          custom: customData,
-        },
-      });
+        })
+      );
     } catch (callErr) {
       console.warn("[Stream API] Call getOrCreate warning:", callErr);
     }
