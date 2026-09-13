@@ -38,10 +38,10 @@ let StreamVideoClientSDK: any = null;
 
 try {
   // Dynamically require Stream Video SDK if native WebRTC is supported
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const streamSdk = require("@stream-io/video-react-native-sdk");
   StreamVideoClientSDK = streamSdk.StreamVideoClient;
-} catch (e) {
+} catch {
   console.warn("[Stream] WebRTC native module not available in current environment (Expo Go/Web mode). Using fallback call session.");
 }
 
