@@ -1,4 +1,5 @@
 import { StreamClient } from "@stream-io/node-sdk";
+import { getLessonById, getLanguageById } from "@/data";
 
 function getStreamServerConfig() {
   const apiKey = process.env.STREAM_API_KEY || process.env.EXPO_PUBLIC_STREAM_API_KEY || "";
@@ -27,10 +28,27 @@ export async function POST(request: Request) {
       );
     }
 
-    const lessonId = body.lessonId || "default-lesson";
+    const lessonId = body.lessonId || "lesson-fr-1-1";
+    const languageId = body.languageId || "fr";
     const userName = body.name || "Learner";
 
-    // Generate Stream user token securely on backend
+    const lesson = getLessonById(lessonId);
+    const language = getLanguageById(languageId || lesson?.languageId || "fr");
+
+    // Upsert AI Teacher agent user with admin role so it has full audio publishing permissions
+    try {
+      await serverClient.upsertUsers([
+        {
+          id: "ai-teacher",
+          name: language?.aiTeacherPersona?.name || "AI Teacher",
+          role: "admin",
+        },
+      ]);
+    } catch (upsertErr) {
+      console.warn("[Stream API] Warning upserting ai-teacher admin user:", upsertErr);
+    }
+
+    // Generate Stream user token securely on backend for learner
     const token = serverClient.generateUserToken({
       user_id: userId,
       validity_in_seconds: 3600 * 24,
@@ -39,21 +57,50 @@ export async function POST(request: Request) {
     // Generate call ID for lesson
     const callId = `audio_call_${lessonId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
 
-    // Upsert call details on server
+    const vocabulary = lesson?.vocabulary
+      ? lesson.vocabulary.map((v) => `${v.term} (${v.translation})`)
+      : [];
+    const phrases = lesson?.phrases
+      ? lesson.phrases.map((p) => `${p.phrase} -> ${p.translation}`)
+      : [];
+    const goals = lesson?.goals
+      ? lesson.goals.map((g) => g.text)
+      : lesson?.description
+      ? [lesson.description]
+      : ["Practice speaking and pronunciation"];
+
+    const customData = {
+      lessonId,
+      lessonTitle: lesson?.title || "Language Lesson",
+      languageId: language?.id || languageId,
+      targetLanguage: language?.name || "French",
+      goals,
+      vocabulary,
+      phrases,
+      aiTeacherPrompt: language?.aiTeacherPersona
+        ? `${language.aiTeacherPersona.name} (${language.aiTeacherPersona.title})`
+        : "Encouraging AI Language Teacher",
+      userName,
+      audioOnly: true,
+    };
+
+    // Upsert call details with custom metadata & audio permission overrides
     try {
       const call = serverClient.video.call("default", callId);
       await call.getOrCreate({
         data: {
           created_by_id: userId,
-          custom: {
-            lessonId,
-            userName,
-            audioOnly: true,
+          settings_override: {
+            audio: {
+              mic_default_on: true,
+              default_device: "speaker",
+            },
           },
+          custom: customData,
         },
       });
-    } catch {
-      // Ignore if call initialization is handled by client or fallback
+    } catch (callErr) {
+      console.warn("[Stream API] Call getOrCreate warning:", callErr);
     }
 
     return Response.json({
@@ -62,6 +109,7 @@ export async function POST(request: Request) {
       callId,
       userId,
       callType: "default",
+      custom: customData,
     });
   } catch (error: any) {
     return Response.json(

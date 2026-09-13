@@ -44,10 +44,12 @@ export function AITutorLessonScreen({
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [isFrontCamera, setIsFrontCamera] = useState(true);
   const [sessionState, setSessionState] = useState<"connecting" | "joined" | "error" | "ended">("connecting");
+  const [agentStatus, setAgentStatus] = useState<"idle" | "connecting" | "connected" | "failed">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const clientRef = useRef<StreamVideoClient | null>(null);
   const callRef = useRef<Call | null>(null);
+  const agentSessionRef = useRef<{ sessionId: string; callId: string } | null>(null);
 
   const tutorState = isLearnerSpeaking ? "listening" : "speaking";
 
@@ -58,6 +60,52 @@ export function AITutorLessonScreen({
 
   const userName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Learner";
   const userId = user?.id || `user_${lessonId || "guest"}`;
+
+  // Start Vision Agent session via Expo API route
+  const startAgentSession = async (callId: string) => {
+    try {
+      setAgentStatus("connecting");
+      const response = await fetch("/api/agent/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callId }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.sessionId) {
+          agentSessionRef.current = { sessionId: data.sessionId, callId };
+          setAgentStatus("connected");
+        } else {
+          setAgentStatus("connected");
+        }
+      } else {
+        console.warn("[Agent Start] Failed status:", response.status);
+        setAgentStatus("failed");
+      }
+    } catch (err) {
+      console.warn("[Agent Start Exception]:", err);
+      setAgentStatus("failed");
+    }
+  };
+
+  // Stop Vision Agent session via Expo API route
+  const stopAgentSession = async () => {
+    if (!agentSessionRef.current) return;
+    const { sessionId, callId } = agentSessionRef.current;
+    agentSessionRef.current = null;
+    try {
+      await fetch("/api/agent/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, callId }),
+      });
+      setAgentStatus("idle");
+    } catch (err) {
+      console.warn("[Agent Stop Exception]:", err);
+      setAgentStatus("idle");
+    }
+  };
 
   // Stream Audio Call Initialization
   const startAudioCall = async () => {
@@ -84,10 +132,14 @@ export function AITutorLessonScreen({
       callRef.current = call;
 
       setSessionState("joined");
+
+      // Spawn AI Teacher Agent into the Stream call
+      await startAgentSession(credentials.callId);
     } catch (err: any) {
       console.warn("[Stream Call Error]:", err);
       setErrorMessage(err?.message || "Could not connect to call");
       setSessionState("joined");
+      setAgentStatus("failed");
     }
   };
 
@@ -119,11 +171,15 @@ export function AITutorLessonScreen({
         callRef.current = call;
 
         setSessionState("joined");
+
+        // Spawn AI Teacher Agent into the Stream call
+        await startAgentSession(credentials.callId);
       } catch (err: any) {
         console.warn("[Stream Call Error]:", err);
         if (!isCancelled) {
           setErrorMessage(err?.message || "Could not connect to call");
           setSessionState("joined");
+          setAgentStatus("failed");
         }
       }
     }
@@ -132,6 +188,7 @@ export function AITutorLessonScreen({
 
     return () => {
       isCancelled = true;
+      void stopAgentSession();
       if (callRef.current) {
         callRef.current.leave().catch(() => {});
       }
@@ -183,6 +240,7 @@ export function AITutorLessonScreen({
   };
 
   const handleEndCall = async () => {
+    await stopAgentSession();
     if (callRef.current) {
       try {
         await callRef.current.leave();
@@ -194,6 +252,7 @@ export function AITutorLessonScreen({
   };
 
   const handleCompleteLesson = async () => {
+    await stopAgentSession();
     if (callRef.current) {
       try {
         await callRef.current.leave();
@@ -255,7 +314,10 @@ export function AITutorLessonScreen({
               </Text>
               <TouchableOpacity
                 onPress={() => {
-                  if (sessionState === "error") {
+                  if (agentStatus === "failed") {
+                    const callId = `audio_call_${(lessonId || "default").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+                    void startAgentSession(callId);
+                  } else if (sessionState === "error") {
                     void startAudioCall();
                   }
                 }}
@@ -263,26 +325,34 @@ export function AITutorLessonScreen({
               >
                 <View
                   className={`h-2 w-2 rounded-full ${
-                    sessionState === "connecting"
+                    agentStatus === "connecting" || sessionState === "connecting"
                       ? "bg-amber-400"
-                      : sessionState === "error"
+                      : agentStatus === "failed" || sessionState === "error"
                       ? "bg-red-500"
-                      : "bg-[#22C55E]"
+                      : agentStatus === "connected"
+                      ? "bg-[#22C55E]"
+                      : "bg-slate-400"
                   }`}
                 />
                 <Text
                   className={`font-['Poppins-Medium'] text-xs ${
-                    sessionState === "connecting"
+                    agentStatus === "connecting" || sessionState === "connecting"
                       ? "text-amber-500"
-                      : sessionState === "error"
+                      : agentStatus === "failed" || sessionState === "error"
                       ? "text-red-500 underline"
-                      : "text-[#22C55E]"
+                      : agentStatus === "connected"
+                      ? "text-[#22C55E]"
+                      : "text-slate-500"
                   }`}
                 >
-                  {sessionState === "connecting"
-                    ? "Connecting..."
-                    : sessionState === "error"
-                    ? errorMessage || "Retry Call"
+                  {agentStatus === "connecting"
+                    ? "Agent Connecting..."
+                    : agentStatus === "connected"
+                    ? "Online & Teaching"
+                    : agentStatus === "failed"
+                    ? "Agent Offline (Retry)"
+                    : sessionState === "connecting"
+                    ? "Connecting Call..."
                     : "Online"}
                 </Text>
               </TouchableOpacity>
