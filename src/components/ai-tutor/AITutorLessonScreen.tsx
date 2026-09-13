@@ -15,11 +15,13 @@ import { images } from "@/constants/images";
 interface AITutorLessonScreenProps {
   lessonId?: string;
   onClose?: () => void;
+  onComplete?: () => void;
 }
 
 export function AITutorLessonScreen({
   lessonId = "lesson-fr-1-1",
   onClose,
+  onComplete,
 }: AITutorLessonScreenProps) {
   const lesson = getLessonById(lessonId) || getLessonById("lesson-fr-1-1");
   const language = lesson ? getLanguageById(lesson.languageId) : null;
@@ -36,22 +38,54 @@ export function AITutorLessonScreen({
 
   const teacherPersona = language?.aiTeacherPersona || {
     name: "Julien",
-    title: "Parisian Language Coach",
+    title: "Language Coach",
   };
 
+  const firstPhrase = lesson?.phrases?.[0];
   const activePhrase = {
-    tutorUtterance: "Bonjour ! Comment allez-vous ?",
-    tutorTranslation: "Hello! How are you?",
-    praise: "¡Muy bien! That was great! 👏",
-    learnerPrompt: "Bonjour ! Comment allez-vous ?",
-    learnerTranslation: "Hello! How are you?",
+    tutorUtterance:
+      firstPhrase?.phrase ||
+      (language?.code === "es"
+        ? "¡Hola! ¿Cómo estás?"
+        : language?.code === "ja"
+        ? "こんにちは！お元気ですか？"
+        : language?.code === "de"
+        ? "Hallo! Wie geht es dir?"
+        : "Bonjour ! Comment allez-vous ?"),
+    tutorTranslation: firstPhrase?.translation || "Hello! How are you?",
+    praise:
+      language?.code === "es"
+        ? "¡Muy bien! That was great! 👏"
+        : language?.code === "ja"
+        ? "素晴らしい！ That was great! 👏"
+        : language?.code === "de"
+        ? "Sehr gut! That was great! 👏"
+        : "Très bien ! That was great! 👏",
+    learnerPrompt:
+      firstPhrase?.phrase ||
+      (language?.code === "es"
+        ? "¡Hola! ¿Cómo estás?"
+        : language?.code === "ja"
+        ? "こんにちは！お元気ですか？"
+        : language?.code === "de"
+        ? "Hallo! Wie geht es dir?"
+        : "Bonjour ! Comment allez-vous ?"),
+    learnerTranslation: firstPhrase?.translation || "Hello! How are you?",
   };
 
   const handleEndCall = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleCompleteLesson = () => {
     if (lesson) {
       completeLesson(lesson.id, lesson.xpReward);
     }
-    if (onClose) {
+    if (onComplete) {
+      onComplete();
+    } else if (onClose) {
       onClose();
     }
   };
@@ -319,6 +353,17 @@ export function AITutorLessonScreen({
                 </View>
               </View>
             </View>
+
+            {/* Explicit Completion Action */}
+            <TouchableOpacity
+              onPress={handleCompleteLesson}
+              className="w-full bg-[#6C4EF5] py-2.5 rounded-2xl items-center justify-center mt-2 active:opacity-90"
+              activeOpacity={0.85}
+            >
+              <Text className="font-['Poppins-Bold'] text-xs text-white">
+                Finish Lesson & Claim +{lesson?.xpReward || 10} XP
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 

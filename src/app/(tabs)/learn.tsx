@@ -178,8 +178,11 @@ export default function LearnScreen() {
                 return (
                   <TouchableOpacity
                     key={lesson.id}
-                    onPress={() => router.push(`/lesson/${lesson.id}` as any)}
-                    activeOpacity={0.85}
+                    onPress={() => {
+                      if (!isCompleted && !isInProgress) return;
+                      router.push(`/lesson/${lesson.id}` as any);
+                    }}
+                    activeOpacity={isCompleted || isInProgress ? 0.85 : 1}
                     className={`rounded-3xl p-5 mb-3.5 flex-row items-center justify-between border ${
                       isInProgress
                         ? "bg-[#F6F4FE] border-2 border-[#8B5CF6] shadow-sm"
