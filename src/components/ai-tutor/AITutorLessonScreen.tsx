@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,9 +8,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "@clerk/expo";
 import { getLessonById, getLanguageById } from "@/data";
 import { useLessonStore } from "@/store/useLessonStore";
 import { images } from "@/constants/images";
+import {
+  fetchStreamToken,
+  setupStreamAudioCall,
+  StreamTokenResponse,
+  StreamVideoClient,
+  Call,
+} from "@/lib/stream";
 
 interface AITutorLessonScreenProps {
   lessonId?: string;
@@ -23,6 +31,7 @@ export function AITutorLessonScreen({
   onClose,
   onComplete,
 }: AITutorLessonScreenProps) {
+  const { user } = useUser();
   const lesson = getLessonById(lessonId) || getLessonById("lesson-fr-1-1");
   const language = lesson ? getLanguageById(lesson.languageId) : null;
   const { completeLesson } = useLessonStore();
@@ -34,12 +43,101 @@ export function AITutorLessonScreen({
   const [isLearnerSpeaking, setIsLearnerSpeaking] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [isFrontCamera, setIsFrontCamera] = useState(true);
+  const [sessionState, setSessionState] = useState<"connecting" | "joined" | "error" | "ended">("connecting");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const clientRef = useRef<StreamVideoClient | null>(null);
+  const callRef = useRef<Call | null>(null);
+
   const tutorState = isLearnerSpeaking ? "listening" : "speaking";
 
   const teacherPersona = language?.aiTeacherPersona || {
     name: "Julien",
     title: "Language Coach",
   };
+
+  const userName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Learner";
+  const userId = user?.id || `user_${lessonId || "guest"}`;
+
+  // Stream Audio Call Initialization
+  const startAudioCall = async () => {
+    if (!lesson) return;
+    try {
+      setSessionState("connecting");
+      setErrorMessage(null);
+
+      const credentials: StreamTokenResponse = await fetchStreamToken({
+        userId,
+        userName,
+        userImage: user?.imageUrl,
+        lessonId: lesson.id,
+        languageId: lesson.languageId,
+      });
+
+      const { client, call } = await setupStreamAudioCall(credentials, {
+        id: userId,
+        name: userName,
+        image: user?.imageUrl,
+      });
+
+      clientRef.current = client;
+      callRef.current = call;
+
+      setSessionState("joined");
+    } catch (err: any) {
+      console.warn("[Stream Call Error]:", err);
+      setErrorMessage(err?.message || "Could not connect to call");
+      setSessionState("joined");
+    }
+  };
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function initAudioCall() {
+      if (!lesson) return;
+      try {
+        const credentials: StreamTokenResponse = await fetchStreamToken({
+          userId,
+          userName,
+          userImage: user?.imageUrl,
+          lessonId: lesson.id,
+          languageId: lesson.languageId,
+        });
+
+        if (isCancelled) return;
+
+        const { client, call } = await setupStreamAudioCall(credentials, {
+          id: userId,
+          name: userName,
+          image: user?.imageUrl,
+        });
+
+        if (isCancelled) return;
+
+        clientRef.current = client;
+        callRef.current = call;
+
+        setSessionState("joined");
+      } catch (err: any) {
+        console.warn("[Stream Call Error]:", err);
+        if (!isCancelled) {
+          setErrorMessage(err?.message || "Could not connect to call");
+          setSessionState("joined");
+        }
+      }
+    }
+
+    void initAudioCall();
+
+    return () => {
+      isCancelled = true;
+      if (callRef.current) {
+        callRef.current.leave().catch(() => {});
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId, userId, userName, user?.imageUrl]);
 
   const langCode = (language?.id || language?.code || "fr").toLowerCase();
   const isEs = langCode.startsWith("es");
@@ -84,13 +182,23 @@ export function AITutorLessonScreen({
     learnerTranslation: firstPhrase?.translation || defaultTranslation,
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
+    if (callRef.current) {
+      try {
+        await callRef.current.leave();
+      } catch {}
+    }
     if (onClose) {
       onClose();
     }
   };
 
-  const handleCompleteLesson = () => {
+  const handleCompleteLesson = async () => {
+    if (callRef.current) {
+      try {
+        await callRef.current.leave();
+      } catch {}
+    }
     if (lesson) {
       completeLesson(lesson.id, lesson.xpReward);
     }
@@ -98,6 +206,20 @@ export function AITutorLessonScreen({
       onComplete();
     } else if (onClose) {
       onClose();
+    }
+  };
+
+  const toggleMic = async () => {
+    const nextMuteState = !isMuted;
+    setIsMuted(nextMuteState);
+    if (callRef.current) {
+      try {
+        if (nextMuteState) {
+          await callRef.current.microphone.disable();
+        } else {
+          await callRef.current.microphone.enable();
+        }
+      } catch {}
     }
   };
 
@@ -131,12 +253,39 @@ export function AITutorLessonScreen({
               <Text className="font-['Poppins-Bold'] text-base text-[#0D132B] leading-5">
                 AI Teacher
               </Text>
-              <View className="flex-row items-center gap-1.5 mt-0.5">
-                <View className="h-2 w-2 rounded-full bg-[#22C55E]" />
-                <Text className="font-['Poppins-Medium'] text-xs text-[#22C55E]">
-                  Online
+              <TouchableOpacity
+                onPress={() => {
+                  if (sessionState === "error") {
+                    void startAudioCall();
+                  }
+                }}
+                className="flex-row items-center gap-1.5 mt-0.5"
+              >
+                <View
+                  className={`h-2 w-2 rounded-full ${
+                    sessionState === "connecting"
+                      ? "bg-amber-400"
+                      : sessionState === "error"
+                      ? "bg-red-500"
+                      : "bg-[#22C55E]"
+                  }`}
+                />
+                <Text
+                  className={`font-['Poppins-Medium'] text-xs ${
+                    sessionState === "connecting"
+                      ? "text-amber-500"
+                      : sessionState === "error"
+                      ? "text-red-500 underline"
+                      : "text-[#22C55E]"
+                  }`}
+                >
+                  {sessionState === "connecting"
+                    ? "Connecting..."
+                    : sessionState === "error"
+                    ? errorMessage || "Retry Call"
+                    : "Online"}
                 </Text>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -400,7 +549,7 @@ export function AITutorLessonScreen({
 
             {/* 🎙 Mic Toggle Button */}
             <TouchableOpacity
-              onPress={() => setIsMuted((prev) => !prev)}
+              onPress={toggleMic}
               className={`h-14 w-14 rounded-full items-center justify-center ${
                 !isMuted ? "bg-[#F3F4F6]" : "bg-red-100"
               }`}
