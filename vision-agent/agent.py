@@ -102,9 +102,10 @@ async def join_call(agent: Agent, call_type: str, call_id: str):
         )
 
         agent.instructions = Instructions(instructions_text)
-        print(f"[AI Teacher Agent] Loaded custom lesson context for {user_name} ({target_lang}): {lesson_title}")
+        print(f"[AI Teacher Agent] Loaded custom lesson context for call '{call_id}' ({target_lang}): {lesson_title}")
     except Exception as err:
-        print(f"[AI Teacher Agent Warning] Could not fetch call custom metadata: {err}")
+        print(f"[AI Teacher Agent Error] Failed to fetch required call metadata for '{call_id}': {err}")
+        raise RuntimeError(f"Cannot join call '{call_id}' without required lesson metadata: {err}") from err
 
     call = await agent.create_call(call_type, call_id)
     async with agent.join(call):

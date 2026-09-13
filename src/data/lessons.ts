@@ -1417,7 +1417,7 @@ export const lessons: Lesson[] = [
     goals: [{ id: "g-zh-1-1", text: "Say 'Hello' in Mandarin ('Nǐ hǎo')" }],
     vocabulary: [
       { id: "v-zh-1", term: "你好 (Nǐ hǎo)", translation: "Hello", partOfSpeech: "greeting", exampleSentence: "你好！很高兴认识你。", exampleTranslation: "Hello! Nice to meet you." },
-      { id: "v-zh-2", term: "谢谢 (Xièxie)", translation: "Thank you", partOfSpeech: "phrase", exampleSentence: "非常谢谢你！", exampleTranslation: "Thank you very much!" },
+      { id: "v-zh-2", term: "谢谢 (Xièxie)", translation: "Thank you", partOfSpeech: "phrase", exampleSentence: "非常感谢你！", exampleTranslation: "Thank you very much!" },
     ],
     phrases: [
       { id: "p-zh-1", phrase: "你好！很高兴认识你。", translation: "Hello! Nice to meet you.", context: "Mandarin greeting" },

@@ -32,7 +32,7 @@ export interface Call {
   };
 }
 
-const PUBLIC_API_KEY = process.env.EXPO_PUBLIC_STREAM_API_KEY || "3g659fxdykha";
+const PUBLIC_API_KEY = process.env.EXPO_PUBLIC_STREAM_API_KEY || "";
 
 let StreamVideoClientSDK: any = null;
 
@@ -74,9 +74,10 @@ export async function fetchStreamToken(
   }
 
   // Fallback token response for dev / offline preview
+  const apiKey = PUBLIC_API_KEY;
   const callId = `audio_call_${config.lessonId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
   return {
-    apiKey: PUBLIC_API_KEY,
+    apiKey,
     token: "dev-token-fallback",
     callId,
     userId: config.userId,
@@ -91,41 +92,42 @@ export async function setupStreamAudioCall(
   credentials: StreamTokenResponse,
   userInfo: { id: string; name?: string; image?: string }
 ): Promise<{ client: StreamVideoClient; call: Call }> {
+  const apiKey = credentials.apiKey || PUBLIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("Stream API key is required but missing from EXPO_PUBLIC_STREAM_API_KEY environment variable.");
+  }
+
   if (StreamVideoClientSDK) {
+    const client = new StreamVideoClientSDK({
+      apiKey,
+      user: {
+        id: userInfo.id,
+        name: userInfo.name || "Learner",
+        image: userInfo.image,
+        type: "authenticated",
+      },
+      token: credentials.token,
+    });
+
+    const call = client.call(credentials.callType || "default", credentials.callId);
+
+    // Audio-only call configuration
+    await call.join({
+      create: true,
+      data: {
+        members: [{ user_id: userInfo.id }],
+      },
+    });
+
+    // Ensure camera is disabled for audio-only experience
     try {
-      const client = new StreamVideoClientSDK({
-        apiKey: credentials.apiKey || PUBLIC_API_KEY,
-        user: {
-          id: userInfo.id,
-          name: userInfo.name || "Learner",
-          image: userInfo.image,
-          type: "authenticated",
-        },
-        token: credentials.token,
-      });
-
-      const call = client.call(credentials.callType || "default", credentials.callId);
-
-      // Audio-only call configuration
-      await call.join({
-        create: true,
-        data: {
-          members: [{ user_id: userInfo.id }],
-        },
-      });
-
-      // Ensure camera is disabled for audio-only experience
-      try {
-        await call.camera.disable();
-        await call.microphone.enable();
-      } catch {
-        // Ignore native permissions if running in web preview
-      }
-
-      return { client, call };
-    } catch (err) {
-      console.warn("[Stream Client Init Error, falling back to mock call]:", err);
+      await call.camera.disable();
+      await call.microphone.enable();
+    } catch {
+      // Ignore native permissions if running in web preview
     }
+
+    return { client, call };
   }
 
   // Fallback Mock Call for Expo Go / Web sandbox where native WebRTC is not compiled

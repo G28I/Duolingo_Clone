@@ -49,6 +49,7 @@ export function AITutorLessonScreen({
 
   const clientRef = useRef<StreamVideoClient | null>(null);
   const callRef = useRef<Call | null>(null);
+  const callIdRef = useRef<string | null>(null);
   const agentSessionRef = useRef<{ sessionId: string; callId: string } | null>(null);
 
   const tutorState = isLearnerSpeaking ? "listening" : "speaking";
@@ -108,7 +109,7 @@ export function AITutorLessonScreen({
   };
 
   // Stream Audio Call Initialization
-  const startAudioCall = async () => {
+  const startAudioCall = async (checkCancelled?: () => boolean) => {
     if (!lesson) return;
     try {
       setSessionState("connecting");
@@ -122,11 +123,17 @@ export function AITutorLessonScreen({
         languageId: lesson.languageId,
       });
 
+      if (checkCancelled && checkCancelled()) return;
+
+      callIdRef.current = credentials.callId;
+
       const { client, call } = await setupStreamAudioCall(credentials, {
         id: userId,
         name: userName,
         image: user?.imageUrl,
       });
+
+      if (checkCancelled && checkCancelled()) return;
 
       clientRef.current = client;
       callRef.current = call;
@@ -138,7 +145,7 @@ export function AITutorLessonScreen({
     } catch (err: any) {
       console.warn("[Stream Call Error]:", err);
       setErrorMessage(err?.message || "Could not connect to call");
-      setSessionState("joined");
+      setSessionState("error");
       setAgentStatus("failed");
     }
   };
@@ -146,51 +153,23 @@ export function AITutorLessonScreen({
   useEffect(() => {
     let isCancelled = false;
 
-    async function initAudioCall() {
-      if (!lesson) return;
-      try {
-        const credentials: StreamTokenResponse = await fetchStreamToken({
-          userId,
-          userName,
-          userImage: user?.imageUrl,
-          lessonId: lesson.id,
-          languageId: lesson.languageId,
-        });
-
-        if (isCancelled) return;
-
-        const { client, call } = await setupStreamAudioCall(credentials, {
-          id: userId,
-          name: userName,
-          image: user?.imageUrl,
-        });
-
-        if (isCancelled) return;
-
-        clientRef.current = client;
-        callRef.current = call;
-
-        setSessionState("joined");
-
-        // Spawn AI Teacher Agent into the Stream call
-        await startAgentSession(credentials.callId);
-      } catch (err: any) {
-        console.warn("[Stream Call Error]:", err);
-        if (!isCancelled) {
-          setErrorMessage(err?.message || "Could not connect to call");
-          setSessionState("joined");
-          setAgentStatus("failed");
-        }
-      }
-    }
-
-    void initAudioCall();
+    void startAudioCall(() => isCancelled);
 
     return () => {
       isCancelled = true;
+      const activeCall = callRef.current;
+      const activeClient = clientRef.current;
+
+      callRef.current = null;
+      clientRef.current = null;
+      callIdRef.current = null;
+
       void stopAgentSession();
-      if (callRef.current) {
-        callRef.current.leave().catch(() => {});
+      if (activeCall) {
+        activeCall.leave().catch(() => {});
+      }
+      if (activeClient?.disconnectUser) {
+        activeClient.disconnectUser().catch(() => {});
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -315,7 +294,7 @@ export function AITutorLessonScreen({
               <TouchableOpacity
                 onPress={() => {
                   if (agentStatus === "failed") {
-                    const callId = `audio_call_${(lessonId || "default").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+                    const callId = callIdRef.current || `audio_call_${(lessonId || "default").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
                     void startAgentSession(callId);
                   } else if (sessionState === "error") {
                     void startAudioCall();
