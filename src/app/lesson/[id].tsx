@@ -19,8 +19,9 @@ import {
   fetchStreamToken,
   setupStreamAudioCall,
   StreamTokenResponse,
+  StreamVideoClient,
+  Call,
 } from "@/lib/stream";
-import { StreamVideoClient, Call } from "@stream-io/video-react-native-sdk";
 
 export default function AudioLessonScreen() {
   const router = useRouter();
