@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -32,7 +32,7 @@ export function AITutorLessonScreen({
   const [isLearnerSpeaking, setIsLearnerSpeaking] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [isFrontCamera, setIsFrontCamera] = useState(true);
-  const [tutorState, setTutorState] = useState<"speaking" | "listening">("speaking");
+  const tutorState = isLearnerSpeaking ? "listening" : "speaking";
 
   const teacherPersona = language?.aiTeacherPersona || {
     name: "Julien",
@@ -46,15 +46,6 @@ export function AITutorLessonScreen({
     learnerPrompt: "Bonjour ! Comment allez-vous ?",
     learnerTranslation: "Hello! How are you?",
   };
-
-  // Sync tutor state with learner speaking state
-  useEffect(() => {
-    if (isLearnerSpeaking) {
-      setTutorState("listening");
-    } else {
-      setTutorState("speaking");
-    }
-  }, [isLearnerSpeaking]);
 
   const handleEndCall = () => {
     if (lesson) {

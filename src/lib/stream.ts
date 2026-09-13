@@ -1,7 +1,6 @@
 import {
   StreamVideoClient,
   Call,
-  User,
 } from "@stream-io/video-react-native-sdk";
 
 export interface StreamSessionConfig {

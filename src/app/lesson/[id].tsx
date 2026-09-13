@@ -28,8 +28,8 @@ export default function AudioLessonScreen() {
   const { user } = useUser();
 
   const lesson = getLessonById(id as string);
-  const language = lesson ? getLanguageById(lesson.languageId) : null;
-  const { completeLesson } = useLessonStore();
+  const language = lesson ? getLanguageById(lesson.languageId) : undefined;
+  const completeLesson = useLessonStore((s) => s.completeLesson);
 
   // Audio Call & Session States
   const [sessionState, setSessionState] = useState<"connecting" | "joined" | "error" | "ended">("connecting");
@@ -81,24 +81,65 @@ export default function AudioLessonScreen() {
       setIsSpeaking(true);
     } catch (err: any) {
       console.warn("[Stream Call Error]:", err);
-      // Even if native WebRTC permissions fail in web sandbox, fallback cleanly to joined state
+      setErrorMessage(err?.message || "Could not connect to call");
       setSessionState("joined");
     }
   };
 
   useEffect(() => {
-    startAudioCall();
+    let isCancelled = false;
+
+    async function initAudioCall() {
+      if (!lesson) return;
+      try {
+        // Fetch Stream token securely from Expo API route
+        const credentials: StreamTokenResponse = await fetchStreamToken({
+          userId,
+          userName,
+          userImage: user?.imageUrl,
+          lessonId: lesson.id,
+          languageId: lesson.languageId,
+        });
+
+        if (isCancelled) return;
+
+        // Initialize Stream Video Client and join Audio-Only Call
+        const { client, call } = await setupStreamAudioCall(credentials, {
+          id: userId,
+          name: userName,
+          image: user?.imageUrl,
+        });
+
+        if (isCancelled) return;
+
+        clientRef.current = client;
+        callRef.current = call;
+
+        setSessionState("joined");
+        setIsSpeaking(true);
+      } catch (err: any) {
+        console.warn("[Stream Call Error]:", err);
+        if (!isCancelled) {
+          setErrorMessage(err?.message || "Could not connect to call");
+          setSessionState("joined");
+        }
+      }
+    }
+
+    void initAudioCall();
 
     const interval = setInterval(() => {
       setIsSpeaking((prev) => !prev);
     }, 3500);
 
     return () => {
+      isCancelled = true;
       clearInterval(interval);
       if (callRef.current) {
         callRef.current.leave().catch(() => {});
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (!lesson) {
@@ -188,10 +229,16 @@ export default function AudioLessonScreen() {
                 </Text>
               </>
             ) : sessionState === "error" ? (
-              <TouchableOpacity onPress={startAudioCall} className="flex-row items-center gap-1">
+              <TouchableOpacity
+                onPress={() => {
+                  setSessionState("connecting");
+                  void startAudioCall();
+                }}
+                className="flex-row items-center gap-1"
+              >
                 <View className="h-2 w-2 rounded-full bg-red-500" />
                 <Text className="font-['Poppins-Medium'] text-xs text-red-500 underline">
-                  Retry Call Setup
+                  {errorMessage || "Retry Call Setup"}
                 </Text>
               </TouchableOpacity>
             ) : (
