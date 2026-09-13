@@ -263,6 +263,34 @@ export function AITutorLessonScreen({
 
   const playUtteranceAudio = () => {
     setAudioPlaying(true);
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const textToSpeak = activePhrase.tutorUtterance.replace(/^["']|["']$/g, "");
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+
+        const speechLang = isEs
+          ? "es-ES"
+          : isJa
+          ? "ja-JP"
+          : isDe
+          ? "de-DE"
+          : isKo
+          ? "ko-KR"
+          : isZh
+          ? "zh-CN"
+          : "fr-FR";
+
+        utterance.lang = speechLang;
+        utterance.rate = 0.9;
+        utterance.onend = () => setAudioPlaying(false);
+        utterance.onerror = () => setAudioPlaying(false);
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch (err) {
+        console.warn("[SpeechSynthesis Error]:", err);
+      }
+    }
     setTimeout(() => setAudioPlaying(false), 1800);
   };
 
